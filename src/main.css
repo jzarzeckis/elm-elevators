@@ -1,0 +1,41 @@
+body {
+  margin: 0;
+}
+
+.floor {
+  box-sizing: border-box;
+  border: solid 2px #CECECE;
+  background-color: #FEFEFE;
+  display: block;
+  width: auto;
+}
+
+.floor .ppl {
+  display: inline-block;
+}
+
+.floor .ppl .pers {
+  display: inline;
+}
+
+.floor:hover {
+  background-color: pink;
+}
+
+.rootContainer {
+  position: relative;
+}
+
+.elevators {
+  position: absolute;
+  bottom: 0;
+  left: 200px;
+}
+
+.elevators .elevator {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  display: block;
+  background-color: teal;
+}
