@@ -10,12 +10,12 @@ import List exposing (range)
 
 floorHeight : Int
 floorHeight =
-    40
+    50
 
 
 elevatorWidth : Int
 elevatorWidth =
-    20
+    40
 
 
 hs =
@@ -127,14 +127,6 @@ renderPerson =
     always <| div [ class "pers" ] [ text "😀" ]
 
 
-renderFloor : Floor -> Html Msg
-renderFloor floor =
-    div [ class "floor", heightStyle ]
-        [ div [ class "number" ] [ text <| toString floor.number ]
-        , div [ class "ppl" ] (List.map renderPerson floor.people)
-        ]
-
-
 renderElevator : Elevator -> Html Msg
 renderElevator e =
     div [ class "elevator", elevatorStyle e.number (toFloat e.sourceFloor) ] []
@@ -149,21 +141,38 @@ renderElevators =
             )
 
 
+renderFloor : Floor -> Html Msg
+renderFloor floor =
+    div [ class "floor", style [ ( "top", toString (floor.number) ++ "px" ) ] ]
+        [ div [ class "number" ] [ text <| toString floor.number ]
+        ]
+
+
 renderFloors : Model -> Html Msg
 renderFloors =
     .floors
         >> lazy
+            -- >> (\f -> ( List.length f, f ))
             (div [ class "floors" ]
-                << List.map renderFloor
-                << List.reverse
+                << List.map (renderFloor)
+             -- << List.reverse
             )
+
+
+worldAttributes : Int -> List (Attribute Msg)
+worldAttributes floorCount =
+    [ class "innerworld", style [ ( "height", toString (floorHeight * floorCount) ++ "px" ) ] ]
 
 
 view : Model -> Html Msg
 view model =
-    div [ class "rootContainer" ]
-        [ renderFloors model
-        , renderElevators model
+    div [ class "container" ]
+        [ div [ class "world" ]
+            [ div (worldAttributes <| List.length model.floors)
+                [ renderFloors model
+                , renderElevators model
+                ]
+            ]
         ]
 
 

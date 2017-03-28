@@ -1,3 +1,4 @@
+require('font-awesome/css/font-awesome.css');
 require('./main.css');
 
 var Elm = require('./Main.elm');
