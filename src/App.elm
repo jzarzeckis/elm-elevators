@@ -2,6 +2,7 @@ module App exposing (..)
 
 import Html exposing (Html, Attribute, text, div)
 import Html.Attributes exposing (class, style)
+import Html.Lazy exposing (lazy)
 import AnimationFrame exposing (times)
 import Time exposing (Time)
 import List exposing (range)
@@ -42,8 +43,8 @@ elevatorStyle nr elev =
 type ElevatorState
     = Idle
     | DoorsClosing Time
-    | DoorsOpening Time
     | PeopleEntering Time
+    | DoorsOpening Time
     | MovingUp Time FloorNumber
     | MovingDown Time FloorNumber
 
@@ -122,8 +123,8 @@ update msg model =
 
 
 renderPerson : Person -> Html Msg
-renderPerson pers =
-    div [ class "pers" ] [ text "😀" ]
+renderPerson =
+    always <| div [ class "pers" ] [ text "😀" ]
 
 
 renderFloor : Floor -> Html Msg
@@ -139,28 +140,41 @@ renderElevator e =
     div [ class "elevator", elevatorStyle e.number (toFloat e.sourceFloor) ] []
 
 
-renderFloors : Floors -> List (Html Msg)
+renderElevators : Model -> Html Msg
+renderElevators =
+    .elevators
+        >> lazy
+            (div [ class "elevators" ]
+                << List.map renderElevator
+            )
+
+
+renderFloors : Model -> Html Msg
 renderFloors =
-    List.reverse >> List.map renderFloor
+    .floors
+        >> lazy
+            (div [ class "floors" ]
+                << List.map renderFloor
+                << List.reverse
+            )
 
 
 view : Model -> Html Msg
 view model =
     div [ class "rootContainer" ]
-        ((div [ class "floors" ] (renderFloors model.floors))
-            :: (div [ class "elevators" ] (List.map renderElevator model.elevators))
-            :: []
-        )
+        [ renderFloors model
+        , renderElevators model
+        ]
 
 
 upPushed : Floor -> Bool
 upPushed floor =
-    List.any (\p -> p > floor.number) floor.people
+    List.any ((<) floor.number) floor.people
 
 
 downPushed : Floor -> Bool
 downPushed floor =
-    List.any (\p -> p < floor.number) floor.people
+    List.any ((>) floor.number) floor.people
 
 
 
