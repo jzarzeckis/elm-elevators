@@ -1,6 +1,6 @@
 module App exposing (..)
 
-import Html exposing (Html, Attribute, text, div)
+import Html exposing (Html, Attribute, text, div, span, i)
 import Html.Attributes exposing (class, style)
 import Html.Lazy exposing (lazy)
 import AnimationFrame exposing (times)
@@ -29,15 +29,6 @@ ws =
 heightStyle : Attribute Msg
 heightStyle =
     style [ hs ]
-
-
-elevatorStyle : ElevatorNumber -> Elevation -> Attribute Msg
-elevatorStyle nr elev =
-    style
-        [ hs
-        , ws
-        , ( "transform", "translate3d(" ++ (toString <| (toFloat nr) * (toFloat elevatorWidth) * 1.5) ++ "px, " ++ (toString <| (round elev) * floorHeight) ++ "px, 0px)" )
-        ]
 
 
 type ElevatorState
@@ -127,9 +118,23 @@ renderPerson =
     always <| div [ class "pers" ] [ text "😀" ]
 
 
+elevatorStyle : ElevatorNumber -> FloorNumber -> Attribute Msg
+elevatorStyle nr elev =
+    style
+        [ ws
+        , ( "transform"
+          , "translate3d("
+                ++ (toString <| nr * elevatorWidth * 3 // 2 + 200)
+                ++ "px, "
+                ++ (toString <| elev * floorHeight)
+                ++ "px, 0px)"
+          )
+        ]
+
+
 renderElevator : Elevator -> Html Msg
 renderElevator e =
-    div [ class "elevator", elevatorStyle e.number (toFloat e.sourceFloor) ] []
+    div [ class "elevator movable", elevatorStyle e.number e.sourceFloor ] []
 
 
 renderElevators : Model -> Html Msg
@@ -141,10 +146,15 @@ renderElevators =
             )
 
 
-renderFloor : Floor -> Html Msg
-renderFloor floor =
-    div [ class "floor", style [ ( "top", toString (floor.number) ++ "px" ) ] ]
-        [ div [ class "number" ] [ text <| toString floor.number ]
+renderFloor : Int -> Floor -> Html Msg
+renderFloor floorCount floor =
+    div [ class "floor", style [ ( "top", toString ((floorCount - floor.number - 1) * floorHeight) ++ "px" ) ] ]
+        [ span [ class "floornumber" ] [ text <| toString floor.number ]
+        , span [ class "buttonindicator" ]
+            [ i [ class "fa fa-arrow-circle-up up" ] []
+            , text " "
+            , i [ class "fa fa-arrow-circle-down down" ] []
+            ]
         ]
 
 
@@ -152,10 +162,10 @@ renderFloors : Model -> Html Msg
 renderFloors =
     .floors
         >> lazy
-            -- >> (\f -> ( List.length f, f ))
-            (div [ class "floors" ]
-                << List.map (renderFloor)
-             -- << List.reverse
+            ((\f ->
+                List.map (renderFloor (List.length f)) f
+             )
+                >> div [ class "floors" ]
             )
 
 
