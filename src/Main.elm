@@ -1,6 +1,7 @@
 module Main exposing (..)
 
 import App exposing (..)
+import DataTypes exposing (Model)
 import Html exposing (program)
 
 
