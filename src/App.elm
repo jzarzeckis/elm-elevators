@@ -9,12 +9,12 @@ import List exposing (range)
 import Set exposing (Set)
 
 
-floorHeight : Int
+floorHeight : Float
 floorHeight =
     50
 
 
-elevatorWidth : Int
+elevatorWidth : Float
 elevatorWidth =
     40
 
@@ -41,14 +41,14 @@ peopleTransitionDuration =
     3 * second
 
 
-elevatorY : Time -> Elevator -> Int
+elevatorY : Time -> Elevator -> Float
 elevatorY time elevator =
     case elevator.state of
         Moving _ eta floor ->
             Debug.crash "Acceleration formulas haven't been implemented yet"
 
         _ ->
-            floorHeight * elevator.sourceFloor
+            floorHeight * (toFloat elevator.sourceFloor)
 
 
 hs =
@@ -126,7 +126,7 @@ type alias ElevatorNumber =
 
 
 type alias Elevation =
-    Int
+    Float
 
 
 type alias Elevator =
@@ -179,15 +179,14 @@ update msg model =
             )
 
 
-elevatorTransforms : ElevatorNumber -> Elevation -> Int -> Attribute Msg
 elevatorTransforms nr elevation wh =
     style
         [ ws
         , ( "transform"
           , "translate3d("
-                ++ (toString <| nr * elevatorWidth * 3 // 2 + 200)
+                ++ (toString <| round <| (toFloat nr) * elevatorWidth * 1.5 + 200)
                 ++ "px, "
-                ++ (toString <| wh - elevation - floorHeight)
+                ++ (toString <| round <| wh - elevation - floorHeight)
                 ++ "px, 0px)"
           )
         ]
@@ -214,7 +213,7 @@ renderButtonsPressed =
         )
 
 
-elevatorDoors : Int -> Html Msg
+elevatorDoors : Float -> Html Msg
 elevatorDoors =
     lazy
         (\offset ->
@@ -223,7 +222,7 @@ elevatorDoors =
                 , style
                     [ ( "transform"
                       , "translate3d("
-                            ++ toString offset
+                            ++ (toString <| round offset)
                             ++ "px, 0px, 0px)"
                       )
                     ]
@@ -232,19 +231,17 @@ elevatorDoors =
         )
 
 
-doorOffset : Time -> Elevator -> Int
+doorOffset : Time -> Elevator -> Float
 doorOffset time el =
     case el.state of
         DoorsOpening eta ->
-            (toFloat elevatorWidth)
+            elevatorWidth
                 * (eta - time)
                 / doorOpenDuration
-                |> round
 
         DoorsClosing eta ->
-            (toFloat elevatorWidth)
+            elevatorWidth
                 * (1 - (eta - time) / doorOpenDuration)
-                |> round
 
         PeopleEntering _ ->
             elevatorWidth
@@ -253,7 +250,7 @@ doorOffset time el =
             0
 
 
-renderElevator : Floors -> Time -> Int -> Elevator -> Html Msg
+renderElevator : Floors -> Time -> Float -> Elevator -> Html Msg
 renderElevator floors time wh el =
     lazyElevator
         ( doorOffset time el, elevatorY time el, wh )
@@ -264,11 +261,11 @@ renderElevator floors time wh el =
 shownFloorNumber : Elevation -> String
 shownFloorNumber elev =
     elev
-        // floorHeight
+        / floorHeight
         |> toString
 
 
-lazyElevator : ( Int, Elevation, Int ) -> Floors -> Elevator -> Html Msg
+lazyElevator : ( Float, Elevation, Float ) -> Floors -> Elevator -> Html Msg
 lazyElevator =
     lazy3
         (\( doorOffset, elevation, wh ) floors e ->
@@ -282,7 +279,7 @@ lazyElevator =
         )
 
 
-renderElevators : Floors -> Time -> List Elevator -> Int -> Html Msg
+renderElevators : Floors -> Time -> List Elevator -> Float -> Html Msg
 renderElevators floors time elevators wh =
     elevators
         |> List.map (renderElevator floors time wh)
@@ -291,7 +288,7 @@ renderElevators floors time elevators wh =
 
 renderFloor : Int -> Floor -> Html Msg
 renderFloor floorCount floor =
-    div [ class "floor", style [ ( "top", toString ((floorCount - floor.number - 1) * floorHeight) ++ "px" ) ] ]
+    div [ class "floor", style [ ( "top", toString ((toFloat (floorCount - floor.number - 1)) * floorHeight) ++ "px" ) ] ]
         [ span [ class "floornumber" ] [ text <| toString floor.number ]
         , span [ class "buttonindicator" ]
             [ i [ class "fa fa-arrow-circle-up up" ] []
@@ -311,37 +308,35 @@ renderFloors =
         )
 
 
-personPosition : Time -> List Elevator -> Person -> ( Int, Elevation )
+personPosition : Time -> List Elevator -> Person -> ( Float, Elevation )
 personPosition _ _ _ =
     ( 10, 10 )
 
 
-lazyPerson : ( Int, Elevation ) -> Gender -> Html Msg
+lazyPerson : ( Float, Elevation ) -> Gender -> Html Msg
 lazyPerson =
     lazy2
         (\( x, y ) gender ->
-            let
-                g =
-                    case gender of
-                        Male ->
-                            "male"
+            i
+                [ class <|
+                    "movable fa user fa-"
+                        ++ case gender of
+                            Male ->
+                                "male"
 
-                        Female ->
-                            "female"
-            in
-                i
-                    [ class <| "movable fa user fa-" ++ g
-                    , style
-                        [ ( "transform"
-                          , "translate3d("
-                                ++ toString x
-                                ++ "px, "
-                                ++ toString y
-                                ++ "px, 0px)"
-                          )
-                        ]
+                            Female ->
+                                "female"
+                , style
+                    [ ( "transform"
+                      , "translate3d("
+                            ++ toString x
+                            ++ "px, "
+                            ++ toString y
+                            ++ "px, 0px)"
+                      )
                     ]
-                    []
+                ]
+                []
         )
 
 
@@ -359,7 +354,7 @@ renderPeople time elevators people =
         |> div [ class "people" ]
 
 
-worldAttributes : Int -> List (Attribute Msg)
+worldAttributes : Float -> List (Attribute Msg)
 worldAttributes height =
     [ class "innerworld", style [ ( "height", toString height ++ "px" ) ] ]
 
@@ -368,7 +363,7 @@ view : Model -> Html Msg
 view model =
     let
         totalHeight =
-            List.length model.floors * floorHeight
+            (toFloat <| List.length model.floors) * floorHeight
     in
         div [ class "container" ]
             [ div [ class "world" ]
